@@ -3,7 +3,7 @@
 Plugin Name: Issuu PDF Sync
 Plugin URI: http://beapi.fr
 Description: Allow to create PDF Flipbooks with the http://issuu.com service.
-Version: 2.2.8
+Version: 3.0
 Author: Benjamin Niess
 Author URI: http://beapi.fr
 Text Domain: ips
@@ -24,36 +24,40 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-define( 'IPS_VERSION', '2.2.8' );
+define( 'IPS_VERSION', '3.0' );
 define( 'IPS_URL', plugins_url( '', __FILE__ ) );
 define( 'IPS_DIR', dirname( __FILE__ ) );
 
-require( IPS_DIR . '/inc/functions.plugin.php');
-require( IPS_DIR . '/inc/shortcodes.php');
+require_once( IPS_DIR . '/classes/main.php');
+require_once( IPS_DIR . '/classes/issuu-api.php');
+require_once( IPS_DIR . '/classes/shortcodes.php');
 
 if ( is_admin() ) {
-	require( IPS_DIR . '/inc/class.admin.php');
+	require( IPS_DIR . '/classes/admin/main.php');
 }
 
 // Activate Issuu PDF Sync
-register_activation_hook( __FILE__, 'IPS_Install' );
+register_activation_hook( __FILE__, array( 'IPS_Main', 'install' ) );
 
 // Init Issuu PDF Sync
-function IPS_Init() {
+function ips_init() {
 	global $ips, $ips_options;
 
 	// Load up the localization file if we're using WordPress in a different language
 	// Important: If you want to add you own translation file without having to hack this plugin, put you mo file in wp-content/languages/plugins/ips-xx_XX.mo
-	if ( !load_textdomain( 'ips', trailingslashit( WP_LANG_DIR ) . 'plugins/ips-' . get_locale() . '.mo' ) ) {
+	if ( ! load_textdomain( 'ips', trailingslashit( WP_LANG_DIR ) . 'plugins/ips-' . get_locale() . '.mo' ) ) {
 		load_plugin_textdomain( 'ips', false, basename( rtrim( dirname( __FILE__ ), '/' ) ) . '/languages' );
 	}
 
-	$ips_options = get_option ( 'ips_options' );
+	$ips_options = get_option( 'ips_options' );
+
+	new IPS_Main();
+	new IPS_Shortcodes();
 
 	// Admin
-	if ( class_exists( 'IPS_Admin' ) ) {
-		$ips['admin'] = new IPS_Admin();
+	if ( class_exists( 'IPS_Admin_Main' ) ) {
+		$ips['admin'] = new IPS_Admin_Main();
 	}
 }
 
-add_action( 'plugins_loaded', 'IPS_Init' );
+add_action( 'plugins_loaded', 'ips_init' );
